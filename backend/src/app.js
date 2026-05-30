@@ -23,6 +23,7 @@ app.use('/api/influencers', require('./routes/influencer.routes'));
 app.use('/api/brand', require('./routes/brand.routes'));
 app.use('/api/content', require('./routes/content.routes'));
 app.use('/api/trends', require('./routes/trend.routes'));
+app.use('/api/youtube', require('./routes/youtube.routes'));
 
 // Health check
 app.get('/api/health', (req, res) => {
