@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react'
 import InfluencerCard from '../components/InfluencerCard'
-import { searchInfluencers } from '../services/api'
+import { matchInfluencers } from '../services/api'
 
 const MOCK_INFLUENCERS = [
   { _id: '1', name: 'Aryan Kapoor', handle: '@aryantech', platform: 'youtube', category: 'Tech', followers: 1200000, influencerScore: 91, authenticityScore: 94, growthScore: 88, brandMatchScore: 96, engagementRate: 6.4, verified: true },
@@ -58,10 +58,27 @@ const BrandDashboard = () => {
     setSearched(true)
 
     try {
-      const res = await searchInfluencers(prompt)
-      setResults(res.data?.influencers || res.data || [])
+      const res = await matchInfluencers(prompt)
+      const data = res.data?.data || res.data || []
+      if (data.length > 0) {
+        setResults(data.map((inf) => ({
+          _id: inf._id,
+          name: inf.fullName || inf.username,
+          handle: `@${inf.username}`,
+          platform: inf.platform,
+          category: inf.niche,
+          followers: inf.followers,
+          influencerScore: inf.scores?.influencerScore || 0,
+          authenticityScore: inf.scores?.authenticityScore || 0,
+          growthScore: inf.scores?.growthScore || 0,
+          brandMatchScore: inf.scores?.brandMatchScore || 0,
+          engagementRate: inf.engagementRate || 0,
+          verified: inf.isVerified,
+        })))
+      } else {
+        setResults(MOCK_INFLUENCERS)
+      }
     } catch {
-      // Backend not running — use mock data for demo
       await new Promise((r) => setTimeout(r, 1800))
       setResults(MOCK_INFLUENCERS)
     } finally {

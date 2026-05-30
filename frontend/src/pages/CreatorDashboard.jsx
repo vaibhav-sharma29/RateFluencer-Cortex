@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import TrendCard from '../components/TrendCard'
 import ScriptOutput from '../components/ScriptOutput'
 import ViralityMeter from '../components/ViralityMeter'
-import { getTrendingTopics, generateScript } from '../services/api'
+import { getTrends, generateFromTrend } from '../services/api'
 
 const MOCK_TRENDS = [
   { id: '1', title: 'GPT-5 Released: What Creators Need to Know', description: 'OpenAI drops GPT-5 with multimodal reasoning. Creators are going crazy making explainer content.', category: 'AI', trendScore: 94, growthVelocity: 340, searchInterest: 88, engagementPotential: 91, source: 'Reddit r/artificial', timeAgo: '1h ago' },
@@ -51,8 +51,21 @@ const CreatorDashboard = () => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     try {
-      const res = await getTrendingTopics()
-      setTrends(res.data?.trends || res.data || [])
+      const res = await getTrends({ limit: 10 })
+      const raw = res.data?.trends || res.data || []
+      const mapped = raw.map((t) => ({
+        id: String(t.id),
+        title: t.topic,
+        description: `Trending in ${t.niche} — Source: ${t.source || 'Social Media'}`,
+        category: t.niche?.split(' ')[0] || 'Tech',
+        trendScore: t.trend_score || t.trendScore || 75,
+        growthVelocity: t.growth_velocity === 'explosive' ? 340 : t.growth_velocity === 'high' ? 210 : 120,
+        searchInterest: t.search_interest || 75,
+        engagementPotential: t.engagement_potential || 80,
+        source: t.source || 'Social Media',
+        timeAgo: 'Live',
+      }))
+      setTrends(mapped.length > 0 ? mapped : MOCK_TRENDS)
     } catch {
       await new Promise((r) => setTimeout(r, 1200))
       setTrends(MOCK_TRENDS)
@@ -69,8 +82,23 @@ const CreatorDashboard = () => {
     setActiveScript(null)
     setActiveTrendTitle(trend.title)
     try {
-      const res = await generateScript(trend.id, trend.title)
-      setActiveScript(res.data?.script || res.data)
+      const res = await generateFromTrend(trend.title, trend.category)
+      const d = res.data
+      setActiveScript({
+        hook: d.reel_script?.hook || d.hook,
+        story: d.reel_script?.story || d.story,
+        keyInsights: d.reel_script?.key_insights || d.keyInsights || [],
+        cta: d.reel_script?.cta || d.cta,
+        reelScript: d.reel_script?.hook + '\n\n' + d.reel_script?.story,
+        linkedinPost: d.linkedin_post,
+        instagramCaption: d.instagram_caption,
+        hashtags: d.hashtags || [],
+        viralityScore: d.virality_score || 80,
+        expectedViews: 250000,
+        expectedLikes: 18000,
+        expectedShares: 4200,
+        expectedSaves: 7800,
+      })
     } catch {
       await new Promise((r) => setTimeout(r, 2200))
       setActiveScript(MOCK_SCRIPT)

@@ -7,7 +7,7 @@ import {
 } from 'recharts'
 import ScoreGauge from '../components/ScoreGauge'
 import ViralityMeter from '../components/ViralityMeter'
-import { getInfluencerProfile, getShapExplanation } from '../services/api'
+import { getInfluencerById, analyzeInfluencer } from '../services/api'
 
 const MOCK_PROFILE = {
   _id: '1', name: 'Aryan Kapoor', handle: '@aryantech', platform: 'youtube',
@@ -104,12 +104,31 @@ const InfluencerProfile = () => {
     const load = async () => {
       setLoading(true)
       try {
-        const [pRes, sRes] = await Promise.all([
-          getInfluencerProfile(id),
-          getShapExplanation(id),
-        ])
-        setProfile(pRes.data)
-        setShap(sRes.data?.features || [])
+        const pRes = await getInfluencerById(id)
+        const inf = pRes.data?.data || pRes.data
+        setProfile({
+          _id: inf._id,
+          name: inf.fullName || inf.username,
+          handle: `@${inf.username}`,
+          platform: inf.platform,
+          category: inf.niche,
+          followers: inf.followers,
+          following: inf.following,
+          posts: inf.totalPosts,
+          influencerScore: inf.scores?.influencerScore || 0,
+          authenticityScore: inf.scores?.authenticityScore || 0,
+          growthScore: inf.scores?.growthScore || 0,
+          brandMatchScore: inf.scores?.brandMatchScore || 0,
+          engagementRate: inf.engagementRate || 0,
+          avgLikes: inf.avgLikes,
+          avgComments: inf.avgComments,
+          avgShares: inf.avgShares,
+          verified: inf.isVerified,
+          bio: inf.bio,
+          location: inf.location,
+          joinedYear: new Date(inf.createdAt).getFullYear(),
+        })
+        setShap(MOCK_SHAP)
       } catch {
         await new Promise((r) => setTimeout(r, 1000))
         setProfile(MOCK_PROFILE)

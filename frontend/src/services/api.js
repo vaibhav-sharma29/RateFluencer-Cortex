@@ -10,7 +10,6 @@ const api = axios.create({
   },
 })
 
-// Request interceptor — attach token if available
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token')
@@ -22,7 +21,6 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 )
 
-// Response interceptor — handle errors globally
 api.interceptors.response.use(
   (response) => response,
   (error) => {
@@ -33,45 +31,34 @@ api.interceptors.response.use(
   }
 )
 
-// ─── Brand APIs ───────────────────────────────────────────────
-export const searchInfluencers = (prompt) =>
-  api.post('/brand/search', { prompt })
+// Auth
+export const login = (credentials) => api.post('/auth/login', credentials)
+export const register = (userData) => api.post('/auth/register', userData)
+export const getMe = () => api.get('/auth/me')
 
-export const getInfluencerScore = (influencerId) =>
-  api.get(`/brand/score/${influencerId}`)
+// Influencers
+export const getInfluencers = (params) => api.get('/influencers', { params })
+export const getTopInfluencers = (limit = 10) => api.get('/influencers/top', { params: { limit } })
+export const getInfluencerById = (id) => api.get(`/influencers/${id}`)
+export const analyzeInfluencer = (id) => api.post(`/influencers/${id}/analyze`)
 
-// ─── Influencer APIs ──────────────────────────────────────────
-export const getInfluencerProfile = (id) =>
-  api.get(`/influencer/${id}`)
+// Brand
+export const matchInfluencers = (prompt, filters = {}) =>
+  api.post('/brand/match', { prompt, ...filters })
+export const getCampaignRecommendations = (data) => api.post('/brand/campaign', data)
 
-export const getInfluencerStats = (id) =>
-  api.get(`/influencer/${id}/stats`)
+// Trends
+export const getTrends = (params) => api.get('/trends', { params })
+export const generateFromTrend = (topic, niche) =>
+  api.post('/trends/generate', { topic, niche })
 
-export const getShapExplanation = (id) =>
-  api.get(`/influencer/${id}/shap`)
+// Content
+export const generateContent = (topic, platform = 'instagram', niche = 'Technology') =>
+  api.post('/content/generate', { topic, platform, niche })
+export const predictVirality = (data) => api.post('/content/predict-virality', data)
 
-// ─── Trend APIs ───────────────────────────────────────────────
-export const getTrendingTopics = () =>
-  api.get('/trends')
-
-export const getTrendScore = (trendId) =>
-  api.get(`/trends/${trendId}/score`)
-
-// ─── Content / Script APIs ────────────────────────────────────
-export const generateScript = (trendId, trendTitle) =>
-  api.post('/content/generate-script', { trendId, trendTitle })
-
-export const getViralityScore = (contentData) =>
-  api.post('/content/virality', contentData)
-
-export const generateCaption = (scriptId) =>
-  api.post('/content/caption', { scriptId })
-
-// ─── Auth APIs ────────────────────────────────────────────────
-export const login = (credentials) =>
-  api.post('/auth/login', credentials)
-
-export const register = (userData) =>
-  api.post('/auth/register', userData)
+// YouTube
+export const getYouTubeChannel = (username) => api.get(`/youtube/channel/${username}`)
+export const importYouTubeChannel = (username) => api.post(`/youtube/import/${username}`)
 
 export default api
