@@ -36,7 +36,7 @@ const MOCK_SCRIPT = {
   expectedSaves: 12600,
 }
 
-const CATEGORIES = ['All', 'AI', 'Tech', 'Finance', 'Health', 'Gaming', 'Fashion', 'Travel']
+const CATEGORIES = ['All', 'AI & Technology', 'Business', 'Finance', 'Startups', 'Creator Economy']
 
 const CreatorDashboard = () => {
   const [trends, setTrends] = useState([])
@@ -46,17 +46,22 @@ const CreatorDashboard = () => {
   const [activeTrendTitle, setActiveTrendTitle] = useState('')
   const [activeCategory, setActiveCategory] = useState('All')
   const [refreshing, setRefreshing] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [customTopic, setCustomTopic] = useState('')
 
-  const fetchTrends = async (isRefresh = false) => {
+  const fetchTrends = async (isRefresh = false, niche = 'All', search = '') => {
     if (isRefresh) setRefreshing(true)
     else setLoading(true)
     try {
-      const res = await getTrends({ limit: 10 })
+      const params = { limit: 15 }
+      if (niche !== 'All') params.niche = niche
+      if (search) params.search = search
+      const res = await getTrends(params)
       const raw = res.data?.trends || res.data || []
       const mapped = raw.map((t) => ({
         id: String(t.id),
         title: t.topic,
-        description: `Trending in ${t.niche} — Source: ${t.source || 'Social Media'}`,
+        description: `Trending in ${t.niche} — Source: ${t.source || 'Social Media'} · ${t.post_count || 0} posts`,
         category: t.niche?.split(' ')[0] || 'Tech',
         trendScore: t.trend_score || t.trendScore || 75,
         growthVelocity: t.growth_velocity === 'explosive' ? 340 : t.growth_velocity === 'high' ? 210 : 120,
@@ -64,6 +69,7 @@ const CreatorDashboard = () => {
         engagementPotential: t.engagement_potential || 80,
         source: t.source || 'Social Media',
         timeAgo: 'Live',
+        niche: t.niche,
       }))
       setTrends(mapped.length > 0 ? mapped : MOCK_TRENDS)
     } catch {
@@ -76,6 +82,21 @@ const CreatorDashboard = () => {
   }
 
   useEffect(() => { fetchTrends() }, [])
+
+  const handleCategoryChange = (cat) => {
+    setActiveCategory(cat)
+    fetchTrends(true, cat, searchQuery)
+  }
+
+  const handleSearch = (e) => {
+    e.preventDefault()
+    fetchTrends(true, activeCategory, searchQuery)
+  }
+
+  const handleCustomGenerate = () => {
+    if (!customTopic.trim()) return
+    handleGenerateScript({ id: 'custom', title: customTopic, category: activeCategory !== 'All' ? activeCategory : 'Technology' })
+  }
 
   const handleGenerateScript = async (trend) => {
     setGeneratingId(trend.id)
@@ -107,9 +128,7 @@ const CreatorDashboard = () => {
     }
   }
 
-  const filteredTrends = trends.filter(
-    (t) => activeCategory === 'All' || t.category === activeCategory
-  )
+  const filteredTrends = trends
 
   const topTrend = trends.reduce((best, t) => (!best || t.trendScore > best.trendScore ? t : best), null)
 
@@ -133,13 +152,46 @@ const CreatorDashboard = () => {
               </p>
             </div>
             <button
-              onClick={() => fetchTrends(true)}
+              onClick={() => fetchTrends(true, activeCategory, searchQuery)}
               disabled={refreshing}
               className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 text-white/60 hover:text-white text-sm font-medium transition-all disabled:opacity-50"
             >
               <span className={refreshing ? 'animate-spin' : ''}>🔄</span>
               {refreshing ? 'Refreshing...' : 'Refresh Trends'}
             </button>
+          </div>
+
+          {/* Search + Custom Topic */}
+          <div className="mt-6 flex flex-col sm:flex-row gap-3">
+            <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search trends... (e.g. AI, finance, creator)"
+                className="input-dark flex-1 text-sm h-10"
+              />
+              <button type="submit" className="px-4 h-10 rounded-xl bg-purple-500/20 border border-purple-500/30 text-purple-300 text-sm font-medium hover:bg-purple-500/30 transition-all">
+                Search
+              </button>
+            </form>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={customTopic}
+                onChange={(e) => setCustomTopic(e.target.value)}
+                placeholder="Custom topic..."
+                className="input-dark text-sm h-10 w-48"
+                onKeyDown={(e) => e.key === 'Enter' && handleCustomGenerate()}
+              />
+              <button
+                onClick={handleCustomGenerate}
+                disabled={!customTopic.trim() || generatingId === 'custom'}
+                className="px-4 h-10 rounded-xl bg-orange-500/20 border border-orange-500/30 text-orange-300 text-sm font-medium hover:bg-orange-500/30 transition-all disabled:opacity-50 whitespace-nowrap"
+              >
+                ✨ Generate
+              </button>
+            </div>
           </div>
         </div>
 
@@ -184,7 +236,7 @@ const CreatorDashboard = () => {
               {CATEGORIES.map((cat) => (
                 <button
                   key={cat}
-                  onClick={() => setActiveCategory(cat)}
+                  onClick={() => handleCategoryChange(cat)}
                   className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all border ${
                     activeCategory === cat
                       ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
