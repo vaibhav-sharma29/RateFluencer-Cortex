@@ -1,0 +1,24 @@
+# Environment files - never commit these
+.env
+.env.local
+.env.production
+
+# Node
+node_modules/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+venv/
+env/
+.venv/
+
+# ML model binaries
+models/saved/*.pkl
+models/saved/*.joblib
+
+# OS
+.DS_Store
+Thumbs.db
