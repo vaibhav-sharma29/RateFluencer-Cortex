@@ -1,16 +1,27 @@
 import React, { useState, useEffect } from 'react'
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
+  const navigate = useNavigate()
+
+  const token = localStorage.getItem('token')
+  const user = JSON.parse(localStorage.getItem('user') || 'null')
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20)
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
+    navigate('/')
+    window.location.reload()
+  }
 
   const navLinks = [
     { path: '/', label: 'Home' },
@@ -58,15 +69,34 @@ const Navbar = () => {
             ))}
           </div>
 
-          {/* CTA */}
+          {/* Right side */}
           <div className="hidden md:flex items-center gap-3">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-green-500/10 border border-green-500/20">
               <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
               <span className="text-green-400 text-xs font-medium">AI Online</span>
             </div>
-            <Link to="/brand" className="btn-primary text-sm py-2 px-4">
-              Get Started
-            </Link>
+
+            {token && user ? (
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                  <div className="w-6 h-6 rounded-full bg-purple-500/30 flex items-center justify-center">
+                    <span className="text-purple-300 text-xs font-bold">{user.name?.charAt(0)}</span>
+                  </div>
+                  <span className="text-white/70 text-xs font-medium">{user.name?.split(' ')[0]}</span>
+                  <span className="text-white/30 text-[10px] px-1.5 py-0.5 rounded-full bg-white/5 border border-white/10 capitalize">{user.role}</span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="px-3 py-1.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-medium hover:bg-red-500/20 transition-all"
+                >
+                  Logout
+                </button>
+              </div>
+            ) : (
+              <Link to="/login" className="btn-primary text-sm py-2 px-4">
+                Sign In
+              </Link>
+            )}
           </div>
 
           {/* Mobile menu button */}
@@ -100,6 +130,22 @@ const Navbar = () => {
               {link.label}
             </Link>
           ))}
+          {token ? (
+            <button
+              onClick={handleLogout}
+              className="w-full text-left px-4 py-3 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-all"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link
+              to="/login"
+              onClick={() => setMobileOpen(false)}
+              className="block px-4 py-3 rounded-xl text-sm font-medium text-purple-300 hover:bg-purple-500/10 transition-all"
+            >
+              Sign In
+            </Link>
+          )}
         </div>
       )}
     </nav>
