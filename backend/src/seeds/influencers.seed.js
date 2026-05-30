@@ -87,7 +87,11 @@ function generateInfluencer(index) {
 
 async function seedInfluencers() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI, {
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
+      family: 4,
+    });
     console.log('✅ Connected to MongoDB');
 
     await Influencer.deleteMany({});

@@ -1,4 +1,5 @@
 const axios = require('axios');
+const { callGroq } = require('../services/groq.service');
 
 const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 
@@ -6,11 +7,11 @@ const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 // @route   GET /api/trends
 // @access  Public
 const getTrends = async (req, res) => {
+  const { niche = 'all', limit = 10 } = req.query;
   try {
-    const { niche = 'all', limit = 10 } = req.query;
-
     const aiResponse = await axios.get(`${AI_ENGINE_URL}/api/trends`, {
       params: { niche, limit },
+      timeout: 5000,
     });
 
     res.json({ success: true, data: aiResponse.data });
