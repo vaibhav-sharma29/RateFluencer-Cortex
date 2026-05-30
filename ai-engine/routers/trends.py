@@ -42,7 +42,50 @@ NICHE_YOUTUBE_QUERIES = {
 }
 
 
-async def fetch_youtube_trends(niche: str = "all") -> list:
+async def fetch_reddit_trends() -> list:
+    subreddits = [
+        ("artificial", "AI & Technology"),
+        ("technology", "AI & Technology"),
+        ("business", "Business"),
+        ("startups", "Startups"),
+        ("investing", "Finance"),
+        ("personalfinance", "Finance"),
+        ("Entrepreneur", "Business"),
+        ("CreatorEconomy", "Creator Economy"),
+    ]
+    results = []
+    headers = {"User-Agent": "RateFluencer/1.0"}
+
+    async with httpx.AsyncClient(timeout=10.0) as client:
+        for subreddit, niche in subreddits[:4]:
+            try:
+                resp = await client.get(
+                    f"https://www.reddit.com/r/{subreddit}/hot.json?limit=3",
+                    headers=headers
+                )
+                if resp.status_code == 200:
+                    posts = resp.json().get("data", {}).get("children", [])
+                    for post in posts:
+                        data = post.get("data", {})
+                        title = data.get("title", "")[:80]
+                        score = data.get("score", 0)
+                        comments = data.get("num_comments", 0)
+                        if title and score > 100:
+                            results.append({
+                                "id": 300 + len(results),
+                                "topic": title,
+                                "niche": niche,
+                                "growth_velocity": "high" if score > 5000 else "medium",
+                                "search_interest": min(int(score / 100), 99),
+                                "engagement_potential": min(int(comments / 10) + 60, 99),
+                                "novelty": int(np.random.randint(70, 92)),
+                                "audience_relevance": int(np.random.randint(72, 94)),
+                                "source": f"Reddit r/{subreddit}",
+                                "post_count": score,
+                            })
+            except Exception:
+                continue
+    return results
     if not YOUTUBE_API_KEY or YOUTUBE_API_KEY == "your_youtube_api_key_here":
         return []
 
@@ -116,6 +159,10 @@ def ml_rank_trends(trends: list) -> list:
 async def get_trends(niche: str = "all", limit: int = 10, search: str = ""):
     all_trends = []
 
+    # Fetch real Reddit trends (no API key needed)
+    reddit_trends = await fetch_reddit_trends()
+    all_trends.extend(reddit_trends)
+
     # Fetch real YouTube trends
     yt_trends = await fetch_youtube_trends(niche)
     all_trends.extend(yt_trends)
@@ -139,6 +186,7 @@ async def get_trends(niche: str = "all", limit: int = 10, search: str = ""):
         "generated_at": datetime.now().isoformat(),
         "sources": list(set(t.get("source", "curated") for t in ranked[:limit])),
         "ranking_model": "Weighted ML Scorer",
+        "reddit_trends_count": len(reddit_trends),
         "youtube_trends_count": len(yt_trends),
     }
 

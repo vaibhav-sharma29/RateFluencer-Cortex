@@ -1,22 +1,13 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import InfluencerCard from '../components/InfluencerCard'
-import { matchInfluencers } from '../services/api'
-
-const MOCK_INFLUENCERS = [
-  { _id: '1', name: 'Aryan Kapoor', handle: '@aryantech', platform: 'youtube', category: 'Tech', followers: 1200000, influencerScore: 91, authenticityScore: 94, growthScore: 88, brandMatchScore: 96, engagementRate: 6.4, verified: true },
-  { _id: '2', name: 'Priya Sharma', handle: '@priyacodes', platform: 'instagram', category: 'Tech', followers: 480000, influencerScore: 85, authenticityScore: 89, growthScore: 92, brandMatchScore: 87, engagementRate: 8.1, verified: true },
-  { _id: '3', name: 'Rahul Verma', handle: '@rahulai', platform: 'linkedin', category: 'Finance', followers: 320000, influencerScore: 78, authenticityScore: 96, growthScore: 71, brandMatchScore: 82, engagementRate: 5.2, verified: false },
-  { _id: '4', name: 'Sneha Patel', handle: '@snehacreates', platform: 'instagram', category: 'Fashion', followers: 890000, influencerScore: 74, authenticityScore: 81, growthScore: 79, brandMatchScore: 68, engagementRate: 7.3, verified: true },
-  { _id: '5', name: 'Dev Malhotra', handle: '@devgaming', platform: 'youtube', category: 'Gaming', followers: 2100000, influencerScore: 88, authenticityScore: 77, growthScore: 85, brandMatchScore: 73, engagementRate: 4.9, verified: true },
-  { _id: '6', name: 'Ananya Singh', handle: '@ananyafit', platform: 'instagram', category: 'Fitness', followers: 650000, influencerScore: 82, authenticityScore: 91, growthScore: 76, brandMatchScore: 79, engagementRate: 9.2, verified: false },
-]
+import { matchInfluencers, getTopInfluencers, importYouTubeChannel } from '../services/api'
 
 const PROMPT_SUGGESTIONS = [
   'Tech creator for AI SaaS product launch',
-  'Fashion influencer for sustainable clothing brand',
   'Finance creator for investment app targeting millennials',
-  'Gaming creator for mobile game promotion',
-  'Fitness influencer for protein supplement brand',
+  'Business creator for startup ecosystem',
+  'AI & Technology creator for developer tools',
+  'Creator Economy influencer for content platform',
 ]
 
 const SORT_OPTIONS = [
@@ -47,9 +38,65 @@ const BrandDashboard = () => {
   const [sortBy, setSortBy] = useState('influencerScore')
   const [activeCategory, setActiveCategory] = useState('All')
   const [error, setError] = useState(null)
+  const [ytUsername, setYtUsername] = useState('')
+  const [ytLoading, setYtLoading] = useState(false)
+  const [ytMessage, setYtMessage] = useState('')
+  const [topInfluencers, setTopInfluencers] = useState([])
   const inputRef = useRef(null)
 
-  const categories = ['All', 'Tech', 'Fashion', 'Fitness', 'Finance', 'Gaming', 'Beauty']
+  const categories = ['All', 'AI & Technology', 'Finance', 'Business', 'Startups', 'Creator Economy']
+
+  useEffect(() => {
+    getTopInfluencers(12).then(res => {
+      const data = res.data?.data || []
+      setTopInfluencers(data.map(inf => ({
+        _id: inf._id,
+        name: inf.fullName,
+        handle: `@${inf.username}`,
+        platform: inf.platform,
+        category: inf.niche,
+        followers: inf.followers,
+        influencerScore: inf.scores?.influencerScore || 0,
+        authenticityScore: inf.scores?.authenticityScore || 0,
+        growthScore: inf.scores?.growthScore || 0,
+        brandMatchScore: inf.scores?.brandMatchScore || 0,
+        engagementRate: parseFloat(inf.engagementRate) || 0,
+        verified: inf.isVerified,
+      })))
+    }).catch(() => {})
+  }, [])
+
+  const handleImportYouTube = async () => {
+    if (!ytUsername.trim()) return
+    setYtLoading(true)
+    setYtMessage('')
+    try {
+      const res = await importYouTubeChannel(ytUsername.trim())
+      setYtMessage(`✅ ${res.data?.data?.fullName || ytUsername} imported successfully!`)
+      setYtUsername('')
+      // Refresh top influencers
+      const topRes = await getTopInfluencers(12)
+      const data = topRes.data?.data || []
+      setTopInfluencers(data.map(inf => ({
+        _id: inf._id,
+        name: inf.fullName,
+        handle: `@${inf.username}`,
+        platform: inf.platform,
+        category: inf.niche,
+        followers: inf.followers,
+        influencerScore: inf.scores?.influencerScore || 0,
+        authenticityScore: inf.scores?.authenticityScore || 0,
+        growthScore: inf.scores?.growthScore || 0,
+        brandMatchScore: inf.scores?.brandMatchScore || 0,
+        engagementRate: parseFloat(inf.engagementRate) || 0,
+        verified: inf.isVerified,
+      })))
+    } catch (err) {
+      setYtMessage(`❌ ${err.response?.data?.message || 'Channel not found. Try handle like: mkbhd, techburner'}`)
+    } finally {
+      setYtLoading(false)
+    }
+  }
 
   const handleSearch = async () => {
     if (!prompt.trim()) return
@@ -59,7 +106,7 @@ const BrandDashboard = () => {
 
     try {
       const res = await matchInfluencers(prompt)
-      const data = res.data?.data || res.data || []
+      const data = res.data?.data || []
       if (data.length > 0) {
         setResults(data.map((inf) => ({
           _id: inf._id,
@@ -72,15 +119,14 @@ const BrandDashboard = () => {
           authenticityScore: inf.scores?.authenticityScore || 0,
           growthScore: inf.scores?.growthScore || 0,
           brandMatchScore: inf.scores?.brandMatchScore || 0,
-          engagementRate: inf.engagementRate || 0,
+          engagementRate: parseFloat(inf.engagementRate) || 0,
           verified: inf.isVerified,
         })))
       } else {
-        setResults(MOCK_INFLUENCERS)
+        setResults(topInfluencers)
       }
     } catch {
-      await new Promise((r) => setTimeout(r, 1800))
-      setResults(MOCK_INFLUENCERS)
+      setResults(topInfluencers.length > 0 ? topInfluencers : [])
     } finally {
       setLoading(false)
     }
@@ -260,14 +306,30 @@ const BrandDashboard = () => {
 
         {/* ── Empty State ── */}
         {!loading && !searched && (
-          <div className="text-center py-20">
-            <div className="w-20 h-20 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-4xl mx-auto mb-6">
-              🎯
-            </div>
-            <h3 className="text-white font-bold text-xl mb-2">Start Your Creator Search</h3>
-            <p className="text-white/40 text-sm max-w-sm mx-auto">
-              Enter a brand description above and let our AI find the most relevant creators for your campaign.
-            </p>
+          <div>
+            {topInfluencers.length > 0 ? (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-white font-bold text-lg">Top Influencers by Score</h3>
+                  <span className="text-white/30 text-xs">Ranked by ML Influencer Score</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {topInfluencers.map((inf, idx) => (
+                    <InfluencerCard key={inf._id} influencer={inf} rank={idx + 1} />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-20">
+                <div className="w-20 h-20 rounded-2xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-4xl mx-auto mb-6">
+                  🎯
+                </div>
+                <h3 className="text-white font-bold text-xl mb-2">Start Your Creator Search</h3>
+                <p className="text-white/40 text-sm max-w-sm mx-auto">
+                  Enter a brand description above or import a YouTube creator to get started.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>

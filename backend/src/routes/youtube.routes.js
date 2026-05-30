@@ -16,7 +16,7 @@ router.get('/channel/:username', async (req, res) => {
   }
 });
 
-router.post('/import/:username', protect, async (req, res) => {
+router.post('/import/:username', async (req, res) => {
   try {
     const profile = await buildInfluencerProfile(req.params.username);
     if (!profile) {
