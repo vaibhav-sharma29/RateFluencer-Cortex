@@ -44,7 +44,7 @@ async function searchYouTubeCreators(query, maxResults = 15) {
         q: query,
         type: 'channel',
         maxResults,
-        order: 'relevance',
+        order: 'viewCount',
         key: YOUTUBE_API_KEY,
       },
     });
@@ -66,7 +66,7 @@ async function searchYouTubeCreators(query, maxResults = 15) {
     });
 
     return statsRes.data.items
-      .filter(ch => parseInt(ch.statistics?.subscriberCount || 0) > 1000)
+      .filter(ch => parseInt(ch.statistics?.subscriberCount || 0) > 10000)
       .map(ch => {
         const subs = parseInt(ch.statistics.subscriberCount || 0);
         const totalViews = parseInt(ch.statistics.viewCount || 0);

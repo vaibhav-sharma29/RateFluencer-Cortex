@@ -1,5 +1,5 @@
 import React from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import ScoreGauge from './ScoreGauge'
 
 const platformIcons = {
@@ -22,6 +22,7 @@ const categoryColors = {
 }
 
 const InfluencerCard = ({ influencer, rank }) => {
+  const navigate = useNavigate()
   const {
     _id,
     name = 'Unknown Creator',
@@ -44,10 +45,15 @@ const InfluencerCard = ({ influencer, rank }) => {
     return n.toString()
   }
 
+  const handleViewProfile = () => {
+    localStorage.setItem('selectedInfluencer', JSON.stringify(influencer))
+    navigate(`/influencer/${_id || '1'}`)
+  }
+
   const catColor = categoryColors[category] || 'bg-purple-500/20 text-purple-300 border-purple-500/30'
 
   return (
-    <Link to={`/influencer/${_id || '1'}`} className="block group">
+    <div onClick={handleViewProfile} className="block group cursor-pointer">
       <div className="glass-card-hover p-5 relative overflow-hidden cursor-pointer">
         {/* Rank badge */}
         {rank && (
@@ -112,7 +118,7 @@ const InfluencerCard = ({ influencer, rank }) => {
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   )
 }
 

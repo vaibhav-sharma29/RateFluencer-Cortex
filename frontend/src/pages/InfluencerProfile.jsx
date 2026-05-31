@@ -104,6 +104,41 @@ const InfluencerProfile = () => {
     const load = async () => {
       setLoading(true)
       try {
+        // Check localStorage first for data passed from card click
+        const cached = localStorage.getItem('selectedInfluencer')
+        if (cached) {
+          const inf = JSON.parse(cached)
+          if (inf._id === id || inf._id?.toString() === id) {
+            setProfile({
+              _id: inf._id,
+              name: inf.fullName || inf.name || inf.username,
+              handle: inf.handle || `@${inf.username}`,
+              platform: inf.platform,
+              category: inf.niche || inf.category,
+              followers: inf.followers,
+              following: inf.following || 0,
+              posts: inf.totalPosts || inf.posts || 0,
+              influencerScore: inf.scores?.influencerScore || inf.influencerScore || 0,
+              authenticityScore: inf.scores?.authenticityScore || inf.authenticityScore || 0,
+              growthScore: inf.scores?.growthScore || inf.growthScore || 0,
+              brandMatchScore: inf.scores?.brandMatchScore || inf.brandMatchScore || 0,
+              engagementRate: parseFloat(inf.engagementRate) || 0,
+              avgLikes: inf.avgLikes || 0,
+              avgComments: inf.avgComments || 0,
+              avgShares: inf.avgShares || 0,
+              verified: inf.isVerified || inf.verified || false,
+              bio: inf.bio || '',
+              location: inf.location || '',
+              joinedYear: inf.createdAt ? new Date(inf.createdAt).getFullYear() : 2020,
+              avatar: inf.avatar || '',
+            })
+            setShap(MOCK_SHAP)
+            setLoading(false)
+            return
+          }
+        }
+
+        // Fallback to API for DB creators
         const pRes = await getInfluencerById(id)
         const inf = pRes.data?.data || pRes.data
         setProfile({
@@ -130,7 +165,6 @@ const InfluencerProfile = () => {
         })
         setShap(MOCK_SHAP)
       } catch {
-        await new Promise((r) => setTimeout(r, 1000))
         setProfile(MOCK_PROFILE)
         setShap(MOCK_SHAP)
       } finally {
