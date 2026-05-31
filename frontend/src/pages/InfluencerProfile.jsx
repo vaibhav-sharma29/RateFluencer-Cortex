@@ -239,9 +239,9 @@ const InfluencerProfile = () => {
               {p.bio && <p className="text-white/60 text-sm max-w-xl">{p.bio}</p>}
               <div className="flex flex-wrap gap-4 mt-3">
                 {[
-                  { label: 'Followers', value: formatNum(p.followers) },
-                  { label: 'Following', value: formatNum(p.following) },
-                  { label: 'Posts', value: p.posts },
+                  { label: p.platform === 'youtube' ? 'Subscribers' : 'Followers', value: formatNum(p.followers) },
+                  { label: p.platform === 'youtube' ? 'Videos' : 'Posts', value: p.posts || 0 },
+                  { label: 'Avg Views', value: formatNum(p.avgViews || 0) },
                   { label: 'Since', value: p.joinedYear },
                 ].map((s) => (
                   <div key={s.label} className="text-center">
@@ -323,9 +323,9 @@ const InfluencerProfile = () => {
               <h3 className="text-white font-bold mb-4">Average Post Performance</h3>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { label: 'Avg Likes', value: formatNum(p.avgLikes), icon: '❤️', color: 'text-red-400' },
-                  { label: 'Avg Comments', value: formatNum(p.avgComments), icon: '💬', color: 'text-blue-400' },
-                  { label: 'Avg Shares', value: formatNum(p.avgShares), icon: '🔁', color: 'text-green-400' },
+                  { label: 'Avg Likes', value: formatNum(p.avgLikes || Math.floor((p.avgViews || 0) * 0.04)), icon: '❤️', color: 'text-red-400' },
+                  { label: 'Avg Comments', value: formatNum(p.avgComments || Math.floor((p.avgViews || 0) * 0.005)), icon: '💬', color: 'text-blue-400' },
+                  { label: 'Avg Views', value: formatNum(p.avgViews || 0), icon: '👁️', color: 'text-green-400' },
                 ].map((m) => (
                   <div key={m.label} className="bg-white/3 rounded-xl p-4 text-center border border-white/5">
                     <div className="text-2xl mb-2">{m.icon}</div>

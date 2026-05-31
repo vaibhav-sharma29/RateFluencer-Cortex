@@ -4,7 +4,6 @@ const AI_ENGINE_URL = process.env.AI_ENGINE_URL || 'http://localhost:8000';
 const YOUTUBE_API_KEY = process.env.YOUTUBE_API_KEY;
 const YOUTUBE_BASE = 'https://www.googleapis.com/youtube/v3';
 
-// Extract keywords from brand prompt for YouTube search
 function extractSearchQuery(prompt) {
   const lower = prompt.toLowerCase();
   const nicheMap = {
@@ -23,96 +22,108 @@ function extractSearchQuery(prompt) {
     'crypto': 'crypto finance creator',
     'health': 'health wellness creator',
   };
-
   for (const [key, query] of Object.entries(nicheMap)) {
     if (lower.includes(key)) return query;
   }
   return `${prompt} creator india`;
 }
 
-// Fetch real YouTube creators based on search query
-async function searchYouTubeCreators(query, maxResults = 15) {
+function extractNiche(query) {
+  const q = query.toLowerCase();
+  if (q.includes('ai') || q.includes('tech') || q.includes('software') || q.includes('saas')) return 'AI & Technology';
+  if (q.includes('finance') || q.includes('invest') || q.includes('stock') || q.includes('crypto')) return 'Finance';
+  if (q.includes('business') || q.includes('entrepreneur') || q.includes('marketing')) return 'Business';
+  if (q.includes('startup') || q.includes('founder')) return 'Startups';
+  if (q.includes('creator') || q.includes('content') || q.includes('youtube')) return 'Creator Economy';
+  if (q.includes('fitness') || q.includes('health') || q.includes('wellness')) return 'Fitness';
+  if (q.includes('food') || q.includes('cooking')) return 'Food';
+  if (q.includes('travel')) return 'Travel';
+  if (q.includes('fashion') || q.includes('style')) return 'Fashion';
+  return 'AI & Technology';
+}
+
+async function searchYouTubeCreators(query) {
   if (!YOUTUBE_API_KEY || YOUTUBE_API_KEY === 'your_youtube_api_key_here') {
     return [];
   }
-
   try {
-    // Search for channels
-    const searchRes = await axios.get(`${YOUTUBE_BASE}/search`, {
-      params: {
-        part: 'snippet',
-        q: query,
-        type: 'channel',
-        maxResults,
-        order: 'viewCount',
-        key: YOUTUBE_API_KEY,
-      },
+    const channelIdSet = new Set();
+
+    const videoRes = await axios.get(`${YOUTUBE_BASE}/search`, {
+      params: { part: 'snippet', q: query, type: 'video', maxResults: 30, order: 'viewCount', key: YOUTUBE_API_KEY },
+    });
+    videoRes.data.items.forEach(item => {
+      if (item.snippet?.channelId) channelIdSet.add(item.snippet.channelId);
     });
 
-    const channelIds = searchRes.data.items
-      .map(item => item.id.channelId)
-      .filter(Boolean)
-      .join(',');
+    const channelRes = await axios.get(`${YOUTUBE_BASE}/search`, {
+      params: { part: 'snippet', q: query, type: 'channel', maxResults: 15, order: 'relevance', key: YOUTUBE_API_KEY },
+    });
+    channelRes.data.items.forEach(item => {
+      if (item.id?.channelId) channelIdSet.add(item.id.channelId);
+    });
 
+    const channelIds = Array.from(channelIdSet).slice(0, 40).join(',');
     if (!channelIds) return [];
 
-    // Get channel statistics
     const statsRes = await axios.get(`${YOUTUBE_BASE}/channels`, {
-      params: {
-        part: 'snippet,statistics',
-        id: channelIds,
-        key: YOUTUBE_API_KEY,
-      },
+      params: { part: 'snippet,statistics', id: channelIds, key: YOUTUBE_API_KEY },
     });
 
+    const niche = extractNiche(query);
     return statsRes.data.items
-      .filter(ch => parseInt(ch.statistics?.subscriberCount || 0) > 10000)
+      .filter(ch => parseInt(ch.statistics?.subscriberCount || 0) > 50000)
       .map(ch => {
         const subs = parseInt(ch.statistics.subscriberCount || 0);
         const totalViews = parseInt(ch.statistics.viewCount || 0);
-        const videoCount = parseInt(ch.statistics.videoCount || 1);
-        const avgViews = Math.floor(totalViews / Math.max(videoCount, 1));
-
+        const videoCount = Math.max(parseInt(ch.statistics.videoCount || 1), 1);
+        const avgViews = Math.max(Math.floor(totalViews / videoCount), 1000);
+        const avgLikes = Math.max(Math.floor(avgViews * 0.04), 50);
+        const avgComments = Math.max(Math.floor(avgViews * 0.005), 10);
         return {
           _id: ch.id,
           username: ch.snippet.customUrl?.replace('@', '') || ch.id,
           fullName: ch.snippet.title,
           platform: 'youtube',
-          niche: 'AI & Technology',
+          niche,
           bio: ch.snippet.description?.slice(0, 150) || '',
           avatar: ch.snippet.thumbnails?.default?.url || '',
           location: ch.snippet.country || 'India',
           followers: subs,
           following: 0,
           totalPosts: videoCount,
-          avgLikes: Math.floor(avgViews * 0.04),
-          avgComments: Math.floor(avgViews * 0.005),
-          avgShares: Math.floor(avgViews * 0.01),
-          avgSaves: Math.floor(avgViews * 0.008),
+          avgLikes,
+          avgComments,
+          avgShares: Math.floor(avgLikes * 0.1),
+          avgSaves: Math.floor(avgLikes * 0.08),
           avgViews,
           postingFrequency: Math.min(videoCount / 52, 7),
           isVerified: subs > 100000,
           isActive: true,
-          engagementRate: ((avgViews * 0.055) / Math.max(subs, 1) * 100).toFixed(2),
+          engagementRate: ((avgLikes + avgComments) / Math.max(subs, 1) * 100).toFixed(2),
         };
-      });
+      })
+      .filter(c => parseFloat(c.engagementRate) < 50);
   } catch (err) {
     console.error('YouTube search error:', err.message);
     return [];
   }
 }
 
-// Get ML scores for a creator from AI Engine
 async function getMLScores(creator) {
   try {
+    const avgViews = Math.max(creator.avgViews || 0, 1000);
+    const avgLikes = Math.max(creator.avgLikes || 0, Math.floor(avgViews * 0.03));
+    const avgComments = Math.max(creator.avgComments || 0, Math.floor(avgViews * 0.003));
+
     const payload = {
       followers: creator.followers,
-      avg_likes: creator.avgLikes,
-      avg_comments: creator.avgComments,
-      avg_shares: creator.avgShares,
-      avg_saves: creator.avgSaves,
-      avg_views: creator.avgViews,
-      posting_frequency: creator.postingFrequency,
+      avg_likes: avgLikes,
+      avg_comments: avgComments,
+      avg_shares: creator.avgShares || Math.floor(avgLikes * 0.1),
+      avg_saves: creator.avgSaves || Math.floor(avgLikes * 0.08),
+      avg_views: avgViews,
+      posting_frequency: creator.postingFrequency || 2,
       niche: creator.niche,
       growth_history: [],
     };
@@ -130,19 +141,17 @@ async function getMLScores(creator) {
       explanation: scoreRes.data.explanation || [],
     };
   } catch {
-    // Fallback scoring based on engagement
     const er = parseFloat(creator.engagementRate) || 3;
+    const followers = creator.followers || 1000;
     return {
-      influencerScore: Math.min(Math.round(er * 8 + Math.log10(creator.followers + 1) * 5), 100),
-      authenticityScore: Math.min(Math.round(er * 7 + 40), 100),
-      growthScore: Math.min(Math.round(er * 6 + 35), 100),
+      influencerScore: Math.min(Math.round(er * 8 + Math.log10(followers) * 5), 95),
+      authenticityScore: Math.min(Math.round(er * 7 + 40), 95),
+      growthScore: Math.min(Math.round(er * 6 + 35), 95),
       explanation: ['Score based on engagement rate and subscriber count'],
     };
   }
 }
 
-// @desc    Match influencers to brand prompt using YouTube API
-// @route   POST /api/brand/match
 const matchInfluencers = async (req, res) => {
   try {
     const { prompt, topK = 10 } = req.body;
@@ -154,54 +163,33 @@ const matchInfluencers = async (req, res) => {
     const searchQuery = extractSearchQuery(prompt);
     console.log(`Searching YouTube for: "${searchQuery}"`);
 
-    // Search real YouTube creators
-    let creators = await searchYouTubeCreators(searchQuery, 25);
+    let creators = await searchYouTubeCreators(searchQuery);
 
-    // If YouTube API not available, fall back to database
     if (creators.length === 0) {
       console.log('YouTube API unavailable, using database');
       const Influencer = require('../models/Influencer.model');
       const keywords = prompt.toLowerCase().split(' ').filter(w => w.length > 3);
-      const query = { isActive: true };
+      const query = { isActive: true, platform: 'youtube' };
 
       if (keywords.length > 0) {
         query.$or = [
           { niche: { $regex: keywords.join('|'), $options: 'i' } },
           { bio: { $regex: keywords.join('|'), $options: 'i' } },
+          { fullName: { $regex: keywords.join('|'), $options: 'i' } },
         ];
       }
 
       const dbCreators = await Influencer.find(query).limit(20);
-      creators = dbCreators.map(c => ({
-        _id: c._id.toString(),
-        username: c.username,
-        fullName: c.fullName,
-        platform: c.platform,
-        niche: c.niche,
-        bio: c.bio,
-        avatar: c.avatar,
-        location: c.location,
-        followers: c.followers,
-        avgLikes: c.avgLikes,
-        avgComments: c.avgComments,
-        avgShares: c.avgShares,
-        avgSaves: c.avgSaves,
-        avgViews: c.avgViews,
-        postingFrequency: c.postingFrequency,
-        isVerified: c.isVerified,
-        engagementRate: c.engagementRate,
-        scores: c.scores,
-      }));
+      const source = dbCreators.length > 0 ? dbCreators : await Influencer.find({ isActive: true, platform: 'youtube' }).limit(20);
+      creators = source.map(c => ({ ...c.toJSON(), engagementRate: c.engagementRate }));
     }
 
-    // Get ML scores for each creator
     const scoredCreators = await Promise.all(
       creators.slice(0, topK).map(async (creator) => {
         const scores = creator.scores?.influencerScore
           ? creator.scores
           : await getMLScores(creator);
 
-        // Brand match score based on prompt relevance
         const promptLower = prompt.toLowerCase();
         const creatorText = `${creator.niche} ${creator.bio} ${creator.fullName}`.toLowerCase();
         const matchWords = promptLower.split(' ').filter(w => w.length > 3);
@@ -224,7 +212,6 @@ const matchInfluencers = async (req, res) => {
       })
     );
 
-    // Sort by brand match score
     scoredCreators.sort((a, b) => b.scores.brandMatchScore - a.scores.brandMatchScore);
 
     res.json({
@@ -232,7 +219,6 @@ const matchInfluencers = async (req, res) => {
       prompt,
       search_query: searchQuery,
       total: scoredCreators.length,
-      data_source: creators[0]?._id?.length === 24 ? 'database' : 'youtube_api',
       data: scoredCreators,
     });
   } catch (error) {
@@ -242,7 +228,7 @@ const matchInfluencers = async (req, res) => {
 
 const getCampaignRecommendations = async (req, res) => {
   try {
-    const { brandName, productType, targetAudience, budget } = req.body;
+    const { brandName } = req.body;
     return res.json({
       success: true,
       data: {

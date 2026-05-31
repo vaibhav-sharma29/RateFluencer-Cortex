@@ -126,6 +126,7 @@ const getTopInfluencers = async (req, res) => {
     const { limit = 10 } = req.query;
     const influencers = await Influencer.find({
       isActive: true,
+      platform: 'youtube',
       'scores.influencerScore': { $ne: null },
     })
       .sort({ 'scores.influencerScore': -1 })

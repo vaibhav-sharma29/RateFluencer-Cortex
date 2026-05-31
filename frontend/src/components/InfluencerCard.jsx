@@ -92,7 +92,7 @@ const InfluencerCard = ({ influencer, rank }) => {
                 {category}
               </span>
               <span className="text-white/30 text-[10px]">
-                {platformIcons[platform]} {formatFollowers(followers)} followers
+                {platformIcons[platform]} {formatFollowers(followers)} {platform === 'youtube' ? 'subscribers' : 'followers'}
               </span>
             </div>
           </div>

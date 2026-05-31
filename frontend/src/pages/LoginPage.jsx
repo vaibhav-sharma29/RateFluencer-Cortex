@@ -7,6 +7,7 @@ const LoginPage = () => {
   const [isLogin, setIsLogin] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [form, setForm] = useState({
     name: '',
     email: '',
@@ -136,16 +137,25 @@ const LoginPage = () => {
             {/* Password */}
             <div>
               <label className="block text-white/60 text-xs font-medium mb-1.5">Password</label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleChange}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="input-dark text-sm h-11"
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={form.password}
+                  onChange={handleChange}
+                  placeholder="••••••••"
+                  required
+                  minLength={6}
+                  className="input-dark text-sm h-11 pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/40 hover:text-white/70 transition-colors text-sm"
+                >
+                  {showPassword ? '🙈' : '👁️'}
+                </button>
+              </div>
             </div>
 
             {/* Role + Company — register only */}

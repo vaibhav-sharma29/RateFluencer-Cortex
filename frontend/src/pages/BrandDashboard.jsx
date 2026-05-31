@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import InfluencerCard from '../components/InfluencerCard'
-import { matchInfluencers, getTopInfluencers, importYouTubeChannel } from '../services/api'
+import { matchInfluencers, getTopInfluencers } from '../services/api'
 
 const PROMPT_SUGGESTIONS = [
   'Tech creator for AI SaaS product launch',
@@ -38,65 +38,40 @@ const BrandDashboard = () => {
   const [sortBy, setSortBy] = useState('influencerScore')
   const [activeCategory, setActiveCategory] = useState('All')
   const [error, setError] = useState(null)
-  const [ytUsername, setYtUsername] = useState('')
-  const [ytLoading, setYtLoading] = useState(false)
-  const [ytMessage, setYtMessage] = useState('')
   const [topInfluencers, setTopInfluencers] = useState([])
   const inputRef = useRef(null)
 
   const categories = ['All', 'AI & Technology', 'Finance', 'Business', 'Startups', 'Creator Economy']
 
+  const mapInfluencer = (inf) => ({
+    _id: inf._id,
+    name: inf.fullName || inf.name,
+    handle: `@${inf.username}`,
+    platform: inf.platform,
+    category: inf.niche || inf.category,
+    followers: inf.followers,
+    avatar: inf.avatar || '',
+    influencerScore: inf.scores?.influencerScore || 0,
+    authenticityScore: inf.scores?.authenticityScore || 0,
+    growthScore: inf.scores?.growthScore || 0,
+    brandMatchScore: inf.scores?.brandMatchScore || 0,
+    engagementRate: parseFloat(inf.engagementRate) || 0,
+    verified: inf.isVerified || inf.verified || false,
+    avgViews: inf.avgViews || 0,
+    avgLikes: inf.avgLikes || 0,
+    avgComments: inf.avgComments || 0,
+    avgShares: inf.avgShares || 0,
+    bio: inf.bio || '',
+    location: inf.location || '',
+    totalPosts: inf.totalPosts || 0,
+  })
+
   useEffect(() => {
     getTopInfluencers(12).then(res => {
       const data = res.data?.data || []
-      setTopInfluencers(data.map(inf => ({
-        _id: inf._id,
-        name: inf.fullName,
-        handle: `@${inf.username}`,
-        platform: inf.platform,
-        category: inf.niche,
-        followers: inf.followers,
-        influencerScore: inf.scores?.influencerScore || 0,
-        authenticityScore: inf.scores?.authenticityScore || 0,
-        growthScore: inf.scores?.growthScore || 0,
-        brandMatchScore: inf.scores?.brandMatchScore || 0,
-        engagementRate: parseFloat(inf.engagementRate) || 0,
-        verified: inf.isVerified,
-      })))
+      setTopInfluencers(data.map(mapInfluencer))
     }).catch(() => {})
   }, [])
-
-  const handleImportYouTube = async () => {
-    if (!ytUsername.trim()) return
-    setYtLoading(true)
-    setYtMessage('')
-    try {
-      const res = await importYouTubeChannel(ytUsername.trim())
-      setYtMessage(`✅ ${res.data?.data?.fullName || ytUsername} imported successfully!`)
-      setYtUsername('')
-      // Refresh top influencers
-      const topRes = await getTopInfluencers(12)
-      const data = topRes.data?.data || []
-      setTopInfluencers(data.map(inf => ({
-        _id: inf._id,
-        name: inf.fullName,
-        handle: `@${inf.username}`,
-        platform: inf.platform,
-        category: inf.niche,
-        followers: inf.followers,
-        influencerScore: inf.scores?.influencerScore || 0,
-        authenticityScore: inf.scores?.authenticityScore || 0,
-        growthScore: inf.scores?.growthScore || 0,
-        brandMatchScore: inf.scores?.brandMatchScore || 0,
-        engagementRate: parseFloat(inf.engagementRate) || 0,
-        verified: inf.isVerified,
-      })))
-    } catch (err) {
-      setYtMessage(`❌ ${err.response?.data?.message || 'Channel not found. Try handle like: mkbhd, techburner'}`)
-    } finally {
-      setYtLoading(false)
-    }
-  }
 
   const handleSearch = async () => {
     if (!prompt.trim()) return
@@ -108,20 +83,7 @@ const BrandDashboard = () => {
       const res = await matchInfluencers(prompt)
       const data = res.data?.data || []
       if (data.length > 0) {
-        setResults(data.map((inf) => ({
-          _id: inf._id,
-          name: inf.fullName || inf.username,
-          handle: `@${inf.username}`,
-          platform: inf.platform,
-          category: inf.niche,
-          followers: inf.followers,
-          influencerScore: inf.scores?.influencerScore || 0,
-          authenticityScore: inf.scores?.authenticityScore || 0,
-          growthScore: inf.scores?.growthScore || 0,
-          brandMatchScore: inf.scores?.brandMatchScore || 0,
-          engagementRate: parseFloat(inf.engagementRate) || 0,
-          verified: inf.isVerified,
-        })))
+        setResults(data.map(mapInfluencer))
       } else {
         setResults(topInfluencers)
       }
