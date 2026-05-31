@@ -155,7 +155,7 @@ const matchInfluencers = async (req, res) => {
     console.log(`Searching YouTube for: "${searchQuery}"`);
 
     // Search real YouTube creators
-    let creators = await searchYouTubeCreators(searchQuery, 15);
+    let creators = await searchYouTubeCreators(searchQuery, 25);
 
     // If YouTube API not available, fall back to database
     if (creators.length === 0) {
