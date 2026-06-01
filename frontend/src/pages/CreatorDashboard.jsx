@@ -37,6 +37,7 @@ const CreatorDashboard = () => {
   const [refreshing, setRefreshing] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [customTopic, setCustomTopic] = useState('')
+  const [topTrend, setTopTrend] = useState(null)
 
   const fetchTrends = async (isRefresh = false, niche = 'All', search = '') => {
     if (isRefresh) setRefreshing(true)
@@ -61,6 +62,10 @@ const CreatorDashboard = () => {
         niche: t.niche,
       }))
       setTrends(mapped)
+      if (mapped.length > 0) {
+        const randomTop = mapped[Math.floor(Math.random() * Math.min(3, mapped.length))]
+        setTopTrend(randomTop)
+      }
     } catch (err) {
       console.error('Trends fetch failed:', err.message)
       setTrends([])
@@ -119,8 +124,6 @@ const CreatorDashboard = () => {
   }
 
   const filteredTrends = trends
-
-  const topTrend = trends.reduce((best, t) => (!best || t.trendScore > best.trendScore ? t : best), null)
 
   return (
     <div className="min-h-screen bg-dark-900 pt-20 pb-16">
