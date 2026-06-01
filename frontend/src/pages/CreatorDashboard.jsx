@@ -4,36 +4,25 @@ import ScriptOutput from '../components/ScriptOutput'
 import ViralityMeter from '../components/ViralityMeter'
 import { getTrends, generateFromTrend } from '../services/api'
 
-const MOCK_TRENDS = [
-  { id: '1', title: 'GPT-5 Released: What Creators Need to Know', description: 'OpenAI drops GPT-5 with multimodal reasoning. Creators are going crazy making explainer content.', category: 'AI', trendScore: 94, growthVelocity: 340, searchInterest: 88, engagementPotential: 91, source: 'Reddit r/artificial', timeAgo: '1h ago' },
-  { id: '2', title: 'Micro-SaaS Boom: Solo Founders Making $10K/Month', description: 'Indie hackers sharing revenue screenshots. Finance + tech crossover content is exploding.', category: 'Tech', trendScore: 87, growthVelocity: 210, searchInterest: 79, engagementPotential: 85, source: 'Reddit r/SaaS', timeAgo: '2h ago' },
-  { id: '3', title: 'Ozempic Side Effects: The Untold Story', description: 'Health creators debunking myths around weight loss drugs. Massive engagement on long-form content.', category: 'Health', trendScore: 82, growthVelocity: 180, searchInterest: 92, engagementPotential: 78, source: 'Reddit r/health', timeAgo: '3h ago' },
-  { id: '4', title: 'India Stock Market Crash: What Happened?', description: 'Nifty drops 3% in a single session. Finance creators explaining the macro triggers.', category: 'Finance', trendScore: 79, growthVelocity: 290, searchInterest: 85, engagementPotential: 82, source: 'Reddit r/IndiaInvestments', timeAgo: '4h ago' },
-  { id: '5', title: 'Valorant New Agent Abilities Leaked', description: 'Gaming community reacting to leaked abilities. Reaction + breakdown content performing 5x average.', category: 'Gaming', trendScore: 76, growthVelocity: 150, searchInterest: 71, engagementPotential: 88, source: 'Reddit r/VALORANT', timeAgo: '5h ago' },
-  { id: '6', title: 'Sustainable Fashion: Thrift Flipping Goes Viral', description: 'Gen Z creators showing thrift store hauls and upcycling. Authenticity-driven content winning.', category: 'Fashion', trendScore: 71, growthVelocity: 120, searchInterest: 68, engagementPotential: 74, source: 'Reddit r/femalefashionadvice', timeAgo: '6h ago' },
-  { id: '7', title: 'Intermittent Fasting Myths Debunked by Doctors', description: 'Medical professionals on TikTok/YouTube correcting misinformation. Trust-based content surging.', category: 'Health', trendScore: 68, growthVelocity: 95, searchInterest: 74, engagementPotential: 71, source: 'Reddit r/nutrition', timeAgo: '8h ago' },
-  { id: '8', title: 'Budget Travel: $500 Europe Trip Breakdown', description: 'Travel creators sharing ultra-budget itineraries. Aspirational + practical content combo is viral.', category: 'Travel', trendScore: 65, growthVelocity: 88, searchInterest: 62, engagementPotential: 79, source: 'Reddit r/solotravel', timeAgo: '10h ago' },
-]
-
 const MOCK_SCRIPT = {
-  hook: "Stop scrolling. In the next 60 seconds, I'll show you exactly why GPT-5 is going to change how you create content forever — and most creators have NO idea.",
-  story: "OpenAI just dropped GPT-5 and the internet is losing its mind. But here's what nobody's talking about: it's not just smarter — it reasons differently. It can look at your analytics, understand your audience, and suggest content ideas that are actually tailored to YOUR niche. I tested it for 3 days straight and here's what I found...",
+  hook: "Stop scrolling. In the next 60 seconds, I'll show you exactly why this trend is going to change how you create content forever.",
+  story: "This trend is reshaping the creator economy. Let me break it down in 60 seconds. Most people are missing the real opportunity here — while everyone focuses on the surface, the real transformation is happening underneath.",
   keyInsights: [
-    "GPT-5 has native multimodal reasoning — it understands images, audio, and text simultaneously",
-    "Response quality improved 40% on complex reasoning tasks vs GPT-4",
-    "Creators using AI tools are growing 3x faster than those who don't",
-    "The window to be an 'early adopter' is closing fast — act now",
+    "This topic is growing 3x faster than alternatives right now",
+    "Early creators are seeing 10x normal engagement",
+    "The window to get ahead is closing fast",
+    "Here is exactly how to position yourself",
   ],
-  cta: "Follow for daily AI tools that actually help creators grow. Drop a 🤖 in the comments if you want my full GPT-5 creator toolkit — I'll DM it to you for free.",
-  reelScript: "HOOK (0-3s): 'Stop scrolling. GPT-5 just dropped and it changes EVERYTHING for creators.'\n\nBODY (3-45s): [Show screen recording of GPT-5 interface] 'Look at this — I asked it to analyze my last 10 videos and suggest my next 5 topics. It gave me a full content calendar with hooks, scripts, and posting times. This took me 3 hours before. Now? 30 seconds.'\n\nCTA (45-60s): 'Follow me for the full breakdown. I'm dropping a free toolkit tomorrow — comment AI below to get it first.'",
-  linkedinPost: "🚀 GPT-5 just launched and I spent 72 hours testing it for content creators.\n\nHere's what actually matters (thread):\n\n1/ The multimodal reasoning is genuinely different. It doesn't just see images — it understands context, emotion, and intent.\n\n2/ I fed it my last 6 months of content analytics. It identified 3 content gaps I completely missed.\n\n3/ Script generation improved dramatically. Less generic, more voice-matched.\n\nThe creators who adapt early will have an unfair advantage.\n\nWhat's your biggest content challenge right now? Drop it below — I'll show you how GPT-5 solves it. 👇",
-  instagramCaption: "GPT-5 dropped and I've been testing it non-stop 🤖✨\n\nHere's the honest truth: it's not just 'better' — it thinks differently.\n\nI asked it to plan my content for the next month. It gave me 30 ideas, 10 hooks, and a full posting schedule — all tailored to MY audience.\n\nThis is the tool I wish I had 2 years ago.\n\nSave this post if you want my full GPT-5 creator guide 🔖\n\nComment 'AI' and I'll DM you the free toolkit 👇",
-  hashtags: ['#GPT5', '#AITools', '#ContentCreator', '#CreatorEconomy', '#ArtificialIntelligence', '#ContentStrategy', '#DigitalMarketing', '#Viral', '#ReelsTips', '#GrowthHacking'],
-  viralityScore: 88,
-  expectedViews: 420000,
-  expectedLikes: 31000,
-  expectedShares: 8400,
-  expectedSaves: 12600,
+  cta: "Follow for daily insights. Drop a 🔥 in the comments if this helped!",
+  reelScript: "HOOK (0-3s): Attention-grabbing opening\n\nBODY (3-45s): Main content with key insights\n\nCTA (45-60s): Follow + engage",
+  linkedinPost: "Hot take on this trending topic:\n\nMost people are missing the real opportunity here.\n\n✅ The data shows explosive growth\n✅ Early movers are winning big\n✅ The strategy most people ignore\n\nWhat's your take? Comment below 👇",
+  instagramCaption: "This is blowing up right now 🚀\n\nAre you paying attention? 👀\n\nSave this post! 📌",
+  hashtags: ['#Trending', '#Creator', '#AI', '#Viral', '#ContentCreator', '#Growth'],
+  viralityScore: 82,
+  expectedViews: 250000,
+  expectedLikes: 18000,
+  expectedShares: 4200,
+  expectedSaves: 7800,
 }
 
 const CATEGORIES = ['All', 'AI & Technology', 'Business', 'Finance', 'Startups', 'Creator Economy']
@@ -57,7 +46,7 @@ const CreatorDashboard = () => {
       if (niche !== 'All') params.niche = niche
       if (search) params.search = search
       const res = await getTrends(params)
-      const raw = res.data?.trends || res.data || []
+      const raw = res.data?.data?.trends || res.data?.trends || []
       const mapped = raw.map((t) => ({
         id: String(t.id),
         title: t.topic,
@@ -71,10 +60,10 @@ const CreatorDashboard = () => {
         timeAgo: 'Live',
         niche: t.niche,
       }))
-      setTrends(mapped.length > 0 ? mapped : MOCK_TRENDS)
-    } catch {
-      await new Promise((r) => setTimeout(r, 1200))
-      setTrends(MOCK_TRENDS)
+      setTrends(mapped)
+    } catch (err) {
+      console.error('Trends fetch failed:', err.message)
+      setTrends([])
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -103,18 +92,19 @@ const CreatorDashboard = () => {
     setActiveScript(null)
     setActiveTrendTitle(trend.title)
     try {
-      const res = await generateFromTrend(trend.title, trend.category)
-      const d = res.data
+      const res = await generateFromTrend(trend.title, trend.niche || trend.category)
+      const d = res.data?.data || res.data
+      const rs = d.reel_script || {}
       setActiveScript({
-        hook: d.reel_script?.hook || d.hook,
-        story: d.reel_script?.story || d.story,
-        keyInsights: d.reel_script?.key_insights || d.keyInsights || [],
-        cta: d.reel_script?.cta || d.cta,
-        reelScript: d.reel_script?.hook + '\n\n' + d.reel_script?.story,
-        linkedinPost: d.linkedin_post,
-        instagramCaption: d.instagram_caption,
+        hook: rs.hook || d.hook || '',
+        story: rs.story || d.story || '',
+        keyInsights: rs.key_insights || d.keyInsights || [],
+        cta: rs.cta || d.cta || '',
+        reelScript: rs.hook && rs.story ? `${rs.hook}\n\n${rs.story}\n\n${rs.cta || ''}` : '',
+        linkedinPost: d.linkedin_post || d.linkedinPost || '',
+        instagramCaption: d.instagram_caption || d.instagramCaption || '',
         hashtags: d.hashtags || [],
-        viralityScore: d.virality_score || 80,
+        viralityScore: d.virality_score || d.viralityScore || 80,
         expectedViews: 250000,
         expectedLikes: 18000,
         expectedShares: 4200,
@@ -282,9 +272,11 @@ const CreatorDashboard = () => {
                     </div>
                   ))
                 ) : (
-                  <div className="text-center py-12">
-                    <div className="text-4xl mb-3">🔍</div>
-                    <p className="text-white/40">No trends in this category right now.</p>
+                  <div className="text-center py-12 glass-card">
+                    <div className="text-4xl mb-3">📡</div>
+                    <p className="text-white font-semibold mb-1">AI Engine not connected</p>
+                    <p className="text-white/40 text-sm">Start the AI Engine: <code className="text-purple-300">python main.py</code></p>
+                    <p className="text-white/30 text-xs mt-2">Or try a different niche filter</p>
                   </div>
                 )}
               </div>

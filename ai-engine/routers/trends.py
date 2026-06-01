@@ -33,13 +33,22 @@ CURATED_TRENDS = [
     {"id": 20, "topic": "How to use AI for personal finance management", "niche": "Finance", "growth_velocity": "high", "search_interest": 84, "engagement_potential": 87, "novelty": 79, "audience_relevance": 86, "source": "YouTube", "post_count": 510},
 ]
 
-NICHE_YOUTUBE_QUERIES = {
-    "AI & Technology": ["AI tools 2026", "artificial intelligence news", "ChatGPT tips"],
-    "Finance": ["stock market 2026", "personal finance AI", "crypto news"],
-    "Business": ["startup tips 2026", "entrepreneur advice", "business growth AI"],
-    "Startups": ["startup funding 2026", "founder story", "product launch"],
-    "Creator Economy": ["content creator tips", "grow on instagram 2026", "youtube growth"],
-}
+
+def ml_rank_trends(trends: list) -> list:
+    velocity_map = {"explosive": 100, "high": 80, "medium": 60, "low": 40}
+    weights = {
+        "growth_velocity_score": 0.30,
+        "search_interest": 0.25,
+        "engagement_potential": 0.25,
+        "novelty": 0.10,
+        "audience_relevance": 0.10,
+    }
+    for t in trends:
+        t["growth_velocity_score"] = velocity_map.get(t.get("growth_velocity", "medium"), 60)
+        noise = np.random.uniform(-3, 3)
+        weighted = sum(t.get(k, 50) * v for k, v in weights.items()) + noise
+        t["trend_score"] = round(max(0, min(100, weighted)), 1)
+    return sorted(trends, key=lambda x: x["trend_score"], reverse=True)
 
 
 async def fetch_reddit_trends() -> list:
@@ -49,14 +58,11 @@ async def fetch_reddit_trends() -> list:
         ("business", "Business"),
         ("startups", "Startups"),
         ("investing", "Finance"),
-        ("personalfinance", "Finance"),
-        ("Entrepreneur", "Business"),
-        ("CreatorEconomy", "Creator Economy"),
     ]
     results = []
     headers = {"User-Agent": "RateFluencer/1.0"}
 
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=8.0) as client:
         for subreddit, niche in subreddits[:4]:
             try:
                 resp = await client.get(
@@ -70,14 +76,14 @@ async def fetch_reddit_trends() -> list:
                         title = data.get("title", "")[:80]
                         score = data.get("score", 0)
                         comments = data.get("num_comments", 0)
-                        if title and score > 100:
+                        if title and score > 50:
                             results.append({
                                 "id": 300 + len(results),
                                 "topic": title,
                                 "niche": niche,
                                 "growth_velocity": "high" if score > 5000 else "medium",
-                                "search_interest": min(int(score / 100), 99),
-                                "engagement_potential": min(int(comments / 10) + 60, 99),
+                                "search_interest": min(int(score / 100) + 50, 99),
+                                "engagement_potential": min(int(comments / 5) + 55, 99),
                                 "novelty": int(np.random.randint(70, 92)),
                                 "audience_relevance": int(np.random.randint(72, 94)),
                                 "source": f"Reddit r/{subreddit}",
@@ -86,41 +92,38 @@ async def fetch_reddit_trends() -> list:
             except Exception:
                 continue
     return results
+
+
+async def fetch_youtube_trends(niche: str = "all") -> list:
     if not YOUTUBE_API_KEY or YOUTUBE_API_KEY == "your_youtube_api_key_here":
         return []
 
+    niche_queries = {
+        "AI & Technology": ["AI tools 2026", "artificial intelligence news"],
+        "Finance": ["stock market 2026", "personal finance tips"],
+        "Business": ["startup tips 2026", "entrepreneur advice"],
+        "Startups": ["startup funding 2026", "founder story"],
+        "Creator Economy": ["content creator tips", "grow on youtube 2026"],
+    }
+
+    queries = [q[0] for q in niche_queries.values()] if niche == "all" else niche_queries.get(niche, [niche])
     results = []
-    queries = []
 
-    if niche == "all":
-        for q_list in NICHE_YOUTUBE_QUERIES.values():
-            queries.append(q_list[0])
-    else:
-        queries = NICHE_YOUTUBE_QUERIES.get(niche, [niche])
-
-    async with httpx.AsyncClient(timeout=10.0) as client:
+    async with httpx.AsyncClient(timeout=8.0) as client:
+        niche_keys = list(niche_queries.keys())
         for i, query in enumerate(queries[:3]):
             try:
                 resp = await client.get(
                     "https://www.googleapis.com/youtube/v3/search",
-                    params={
-                        "part": "snippet",
-                        "q": query,
-                        "type": "video",
-                        "order": "viewCount",
-                        "maxResults": 2,
-                        "key": YOUTUBE_API_KEY,
-                    }
+                    params={"part": "snippet", "q": query, "type": "video", "order": "viewCount", "maxResults": 2, "key": YOUTUBE_API_KEY}
                 )
                 if resp.status_code == 200:
                     items = resp.json().get("items", [])
+                    niche_name = niche if niche != "all" else niche_keys[i % len(niche_keys)]
                     for item in items:
-                        title = item["snippet"]["title"][:80]
-                        channel = item["snippet"]["channelTitle"]
-                        niche_name = list(NICHE_YOUTUBE_QUERIES.keys())[i % len(NICHE_YOUTUBE_QUERIES)]
                         results.append({
                             "id": 200 + len(results),
-                            "topic": title,
+                            "topic": item["snippet"]["title"][:80],
                             "niche": niche_name,
                             "growth_velocity": "high",
                             "search_interest": int(np.random.randint(75, 95)),
@@ -128,52 +131,29 @@ async def fetch_reddit_trends() -> list:
                             "novelty": int(np.random.randint(70, 92)),
                             "audience_relevance": int(np.random.randint(72, 94)),
                             "source": "YouTube",
-                            "channel": channel,
+                            "channel": item["snippet"]["channelTitle"],
                             "post_count": int(np.random.randint(200, 1500)),
                         })
             except Exception:
                 continue
-
     return results
-
-
-def ml_rank_trends(trends: list) -> list:
-    velocity_map = {"explosive": 100, "high": 80, "medium": 60, "low": 40}
-    weights = {
-        "growth_velocity_score": 0.30,
-        "search_interest": 0.25,
-        "engagement_potential": 0.25,
-        "novelty": 0.10,
-        "audience_relevance": 0.10,
-    }
-    for t in trends:
-        t["growth_velocity_score"] = velocity_map.get(t.get("growth_velocity", "medium"), 60)
-        # Add small random variation so refresh shows different ordering
-        noise = np.random.uniform(-3, 3)
-        weighted = sum(t.get(k, 50) * v for k, v in weights.items()) + noise
-        t["trend_score"] = round(max(0, min(100, weighted)), 1)
-    return sorted(trends, key=lambda x: x["trend_score"], reverse=True)
 
 
 @router.get("/")
 async def get_trends(niche: str = "all", limit: int = 10, search: str = ""):
     all_trends = []
 
-    # Fetch real Reddit trends (no API key needed)
     reddit_trends = await fetch_reddit_trends()
     all_trends.extend(reddit_trends)
 
-    # Fetch real YouTube trends
     yt_trends = await fetch_youtube_trends(niche)
     all_trends.extend(yt_trends)
 
-    # Add curated trends
     curated = [t.copy() for t in CURATED_TRENDS]
     if niche != "all":
         curated = [t for t in curated if niche.lower() in t["niche"].lower()]
     all_trends.extend(curated)
 
-    # Search filter
     if search:
         search_lower = search.lower()
         all_trends = [t for t in all_trends if search_lower in t["topic"].lower() or search_lower in t["niche"].lower()]
@@ -186,8 +166,8 @@ async def get_trends(niche: str = "all", limit: int = 10, search: str = ""):
         "generated_at": datetime.now().isoformat(),
         "sources": list(set(t.get("source", "curated") for t in ranked[:limit])),
         "ranking_model": "Weighted ML Scorer",
-        "reddit_trends_count": len(reddit_trends),
-        "youtube_trends_count": len(yt_trends),
+        "reddit_count": len(reddit_trends),
+        "youtube_count": len(yt_trends),
     }
 
 
@@ -202,7 +182,7 @@ async def generate_from_trend(data: GenerateFromTrendInput):
     from services.groq_service import call_groq
     import json, re
 
-    system_prompt = "You are a viral content creator. Generate structured content in valid JSON only. No extra text."
+    system_prompt = "You are a viral content creator. Generate structured content in valid JSON only."
     user_prompt = f"""Create viral content for trending topic: "{data.topic}" in niche: "{data.niche}".
 
 Return ONLY this JSON:
@@ -214,7 +194,7 @@ Return ONLY this JSON:
     "cta": "call to action",
     "duration": "45 seconds"
   }},
-  "linkedin_post": "professional LinkedIn post with emojis and line breaks (150 words)",
+  "linkedin_post": "professional LinkedIn post with emojis (150 words)",
   "instagram_caption": "Instagram caption with emojis (60 words)",
   "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5", "#tag6", "#tag7", "#tag8"],
   "virality_score": 85
@@ -228,18 +208,14 @@ Return ONLY this JSON:
         parsed = {
             "reel_script": {
                 "hook": f'🔥 "{data.topic}" is changing everything — here\'s what you NEED to know',
-                "story": f"This trend is reshaping {data.niche}. Let me break it down in 60 seconds. Most people are missing the real opportunity here.",
-                "key_insights": [
-                    "3x growth in the last 30 days",
-                    "Top creators are getting 10x normal reach",
-                    "Here is exactly how to position yourself right now"
-                ],
-                "cta": "Save this, share it with someone who needs to see it, and follow for more!",
+                "story": f"This trend is reshaping {data.niche}. Most people are missing the real opportunity here.",
+                "key_insights": ["3x growth in the last 30 days", "Top creators getting 10x reach", "Here is how to position yourself now"],
+                "cta": "Save this, share it, and follow for more!",
                 "duration": "50 seconds"
             },
             "virality_score": int(np.random.randint(78, 95)),
-            "linkedin_post": f'Hot take on "{data.topic}":\n\nMost people are missing the real opportunity here.\n\nAfter studying this for weeks, here is what I found:\n\n✅ The data shows explosive growth\n✅ Early movers are winning big\n✅ The window is closing fast\n\nWhat is your take? Comment below 👇\n\n#{data.niche.replace(" ", "")} #Trending #Innovation',
-            "instagram_caption": f'"{data.topic}" is blowing up right now 🚀\n\nAre you paying attention? 👀\n\nSave this post! 📌\n\n#Trending #{data.niche.replace(" ", "")} #Viral',
+            "linkedin_post": f'Hot take on "{data.topic}":\n\nMost people are missing the real opportunity.\n\n#{data.niche.replace(" ", "")} #Trending',
+            "instagram_caption": f'"{data.topic}" is blowing up 🚀\n\nSave this! 📌\n\n#Trending #{data.niche.replace(" ", "")}',
             "hashtags": [f"#{data.topic.replace(' ', '')[:20]}", f"#{data.niche.replace(' ', '')}", "#AI", "#Trending", "#Viral", "#Creator", "#Innovation", "#Tech"]
         }
 
