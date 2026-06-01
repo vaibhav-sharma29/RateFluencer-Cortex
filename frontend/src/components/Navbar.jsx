@@ -27,6 +27,7 @@ const Navbar = () => {
     { path: '/', label: 'Home' },
     { path: '/brand', label: 'Brand Dashboard' },
     { path: '/creator', label: 'Creator Dashboard' },
+    { path: '/agent', label: '🤖 AI Agent' },
   ]
 
   const isActive = (path) => location.pathname === path

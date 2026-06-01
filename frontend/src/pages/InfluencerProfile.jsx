@@ -109,6 +109,14 @@ const InfluencerProfile = () => {
         if (cached) {
           const inf = JSON.parse(cached)
           if (inf._id === id || inf._id?.toString() === id) {
+            const featureImportance = inf.featureImportance || {}
+            const realShap = Object.keys(featureImportance).length > 0
+              ? Object.entries(featureImportance).map(([feature, value]) => ({
+                  feature: feature.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                  value: parseFloat(value) || 0,
+                  impact: parseFloat(value) >= 0 ? 'positive' : 'negative',
+                })).sort((a, b) => Math.abs(b.value) - Math.abs(a.value))
+              : MOCK_SHAP
             setProfile({
               _id: inf._id,
               name: inf.fullName || inf.name || inf.username,
@@ -126,13 +134,18 @@ const InfluencerProfile = () => {
               avgLikes: inf.avgLikes || 0,
               avgComments: inf.avgComments || 0,
               avgShares: inf.avgShares || 0,
+              avgViews: inf.avgViews || 0,
               verified: inf.isVerified || inf.verified || false,
               bio: inf.bio || '',
               location: inf.location || '',
               joinedYear: inf.createdAt ? new Date(inf.createdAt).getFullYear() : 2020,
               avatar: inf.avatar || '',
+              explanation: inf.explanation || [],
+              authenticityFlags: inf.authenticityFlags || [],
+              growthTier: inf.growthTier || 'Moderate',
+              growthPredictions: inf.growthPredictions || {},
             })
-            setShap(MOCK_SHAP)
+            setShap(realShap)
             setLoading(false)
             return
           }
@@ -341,6 +354,34 @@ const InfluencerProfile = () => {
         {/* ── Tab: Growth ── */}
         {activeTab === 'growth' && (
           <div className="space-y-6">
+            {p.growthTier && (
+              <div className="glass-card p-4 border-blue-500/20 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-xl">📈</div>
+                <div>
+                  <p className="text-white font-bold">Growth Tier: {p.growthTier}</p>
+                  <p className="text-white/40 text-xs">Based on engagement rate, posting consistency, and niche growth</p>
+                </div>
+              </div>
+            )}
+
+            {p.growthPredictions && Object.keys(p.growthPredictions).length > 0 && (
+              <div className="glass-card p-5">
+                <h3 className="text-white font-bold mb-4">Predicted Subscriber Growth</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { label: '3 Months', key: '3_months', color: 'text-blue-400' },
+                    { label: '6 Months', key: '6_months', color: 'text-purple-400' },
+                    { label: '12 Months', key: '12_months', color: 'text-green-400' },
+                  ].map(item => (
+                    <div key={item.key} className="bg-white/3 rounded-xl p-4 text-center border border-white/5">
+                      <div className={`text-xl font-black ${item.color}`}>{formatNum(p.growthPredictions[item.key] || 0)}</div>
+                      <div className="text-white/40 text-xs mt-1">{item.label}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="glass-card p-5">
               <h3 className="text-white font-bold mb-1">Follower Growth (6 Months)</h3>
               <p className="text-white/40 text-xs mb-5">Monthly follower count trajectory</p>
@@ -475,9 +516,34 @@ const InfluencerProfile = () => {
 
               <div className="mt-6 p-4 rounded-xl bg-purple-500/5 border border-purple-500/15">
                 <p className="text-white/50 text-xs leading-relaxed">
-                  <span className="text-purple-300 font-semibold">How to read this:</span> SHAP values show each feature's contribution to the final Influencer Score. Positive values (green) push the score higher, negative values (red) pull it down. The bar length shows relative importance.
+                  <span className="text-purple-300 font-semibold">How to read this:</span> SHAP values show each feature's contribution to the final Influencer Score. Positive values (green) push the score higher, negative values (red) pull it down.
                 </p>
               </div>
+
+              {/* Authenticity Flags */}
+              {p.authenticityFlags && p.authenticityFlags.length > 0 && (
+                <div className="mt-4 p-4 rounded-xl bg-white/3 border border-white/10">
+                  <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">Authenticity Analysis</p>
+                  {p.authenticityFlags.map((flag, i) => (
+                    <div key={i} className={`flex items-start gap-2 text-xs mb-1.5 ${flag.includes('No suspicious') ? 'text-green-400' : 'text-yellow-400'}`}>
+                      <span>{flag.includes('No suspicious') ? '✅' : '⚠️'}</span>
+                      <span>{flag}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Score Explanation */}
+              {p.explanation && p.explanation.length > 0 && (
+                <div className="mt-4 p-4 rounded-xl bg-blue-500/5 border border-blue-500/15">
+                  <p className="text-white/60 text-xs font-semibold uppercase tracking-wider mb-3">AI Score Explanation</p>
+                  {p.explanation.map((exp, i) => (
+                    <p key={i} className="text-white/60 text-xs mb-1.5 flex items-start gap-2">
+                      <span className="text-blue-400">→</span> {exp}
+                    </p>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Score breakdown */}

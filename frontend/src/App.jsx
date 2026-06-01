@@ -5,6 +5,7 @@ import BrandDashboard from './pages/BrandDashboard'
 import CreatorDashboard from './pages/CreatorDashboard'
 import InfluencerProfile from './pages/InfluencerProfile'
 import LoginPage from './pages/LoginPage'
+import AgentPage from './pages/AgentPage'
 import Navbar from './components/Navbar'
 
 const ProtectedRoute = ({ children }) => {
@@ -27,6 +28,7 @@ function App() {
                 <Routes>
                   <Route path="/" element={<LandingPage />} />
                   <Route path="/creator" element={<CreatorDashboard />} />
+                  <Route path="/agent" element={<AgentPage />} />
                   <Route
                     path="/brand"
                     element={
