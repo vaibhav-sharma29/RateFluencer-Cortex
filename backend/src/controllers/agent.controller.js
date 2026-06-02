@@ -100,36 +100,38 @@ Return ONLY this JSON:
     // STEP 3: Generate complete campaign content
     sendStep('generating', { message: 'Generating complete campaign content package...', progress: 55 });
 
-    const campaignPrompt = `You are a viral content creator and marketing expert. Create a complete campaign content package.
+    const campaignPrompt = `You are a viral content creator and marketing expert. Create a UNIQUE and SPECIFIC campaign content package for this exact brand.
 
 Brand: ${brandName}
-Product/Service: ${productType || 'e-commerce platform'}
+Product/Service: ${productType || 'platform'}
 Target Audience: ${targetAudience || 'general consumers in India'}
 Campaign Goal: ${campaignGoal || 'increase brand awareness and sales'}
 Trending Topic to leverage: "${selectedTrend}"
 Brand Angle: "${trendAngle}"
 
+IMPORTANT: Make ALL content SPECIFIC to ${brandName}. Mention the brand name multiple times. Include specific features, benefits, or USPs of ${brandName}. Do NOT use generic content.
+
 Create a complete campaign package. Return ONLY this JSON:
 {
-  "campaign_title": "catchy campaign name",
+  "campaign_title": "catchy campaign name specifically for ${brandName}",
   "video_concept": {
-    "title": "video title",
-    "hook": "first 3 seconds hook (very attention-grabbing with emoji)",
-    "script": "complete 60-second video script with timestamps like [0-5s], [5-20s], [20-50s], [50-60s]",
-    "visual_suggestions": ["visual idea 1", "visual idea 2", "visual idea 3"],
-    "music_mood": "upbeat/emotional/energetic etc",
-    "cta": "clear call to action"
+    "title": "video title mentioning ${brandName}",
+    "hook": "first 3 seconds hook mentioning ${brandName} (very attention-grabbing with emoji)",
+    "script": "complete 60-second video script with timestamps [0-5s], [5-20s], [20-50s], [50-60s] - mention ${brandName} at least 3 times",
+    "visual_suggestions": ["visual idea 1 specific to ${brandName}", "visual idea 2", "visual idea 3"],
+    "music_mood": "upbeat/emotional/energetic",
+    "cta": "clear call to action for ${brandName}"
   },
-  "linkedin_post": "professional LinkedIn post 200 words with emojis and line breaks",
+  "linkedin_post": "professional LinkedIn post 200 words about ${brandName} with emojis",
   "instagram_story": {
-    "slide_1": "first story slide text (short, punchy)",
-    "slide_2": "second story slide text",
-    "slide_3": "third story slide with CTA",
-    "sticker_suggestions": ["poll sticker idea", "question sticker idea"]
+    "slide_1": "first story slide about ${brandName} (short, punchy)",
+    "slide_2": "second story slide with key benefit of ${brandName}",
+    "slide_3": "third story slide with CTA for ${brandName}",
+    "sticker_suggestions": ["poll about ${brandName}", "question about ${productType || brandName}"]
   },
-  "instagram_caption": "Instagram reel caption with emojis 80 words",
-  "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5", "#tag6", "#tag7", "#tag8", "#tag9", "#tag10"],
-  "best_posting_time": "Day and time recommendation",
+  "instagram_caption": "Instagram reel caption about ${brandName} with emojis 80 words",
+  "hashtags": ["#${brandName.replace(/\s/g, '')}", "#tag2", "#tag3", "#tag4", "#tag5", "#tag6", "#tag7", "#tag8", "#tag9", "#tag10"],
+  "best_posting_time": "Day and time recommendation for ${targetAudience || 'Indian audience'}",
   "expected_reach": "estimated reach range"
 }`;
 
@@ -148,30 +150,30 @@ Create a complete campaign package. Return ONLY this JSON:
 
     if (!campaignContent) {
       campaignContent = {
-        campaign_title: `${brandName} x Trending — The Future is Now`,
+        campaign_title: `${brandName} x ${selectedTrend.split(' ').slice(0, 3).join(' ')} — The Future is Now`,
         video_concept: {
           title: `Why ${brandName} is the smartest choice in 2026`,
-          hook: `🚨 Stop scrolling! ${brandName} just changed the game and nobody is talking about it...`,
-          script: `[0-5s] Hook: "Everyone is talking about ${selectedTrend}. But here's what they're missing about ${brandName}..."\n\n[5-20s] Problem: "Most people waste time and money on outdated solutions. The smart ones have already switched."\n\n[20-50s] Solution: "With ${brandName}, you get [key benefit 1], [key benefit 2], and [key benefit 3]. I've been using it for 3 months and the results are insane."\n\n[50-60s] CTA: "Link in bio. Use code VIRAL for extra discount. Follow for more smart tips!"`,
+          hook: `🚨 Stop scrolling! ${brandName} just changed the game — and here's why you need to know this RIGHT NOW...`,
+          script: `[0-5s] "Everyone is talking about ${selectedTrend}. But here's what they're NOT telling you about ${brandName}..."\n\n[5-20s] "Most people are still using outdated solutions. But ${brandName} users? They're already 3 steps ahead. Here's the difference..."\n\n[20-50s] "I've been using ${brandName} for ${productType || 'everything'} and the results are insane. ${trendAngle}. The data doesn't lie — ${brandName} delivers."\n\n[50-60s] "Don't wait. Visit ${brandName} now — link in bio. Use this video as your sign to switch today!"`,
           visual_suggestions: [
-            'Before/after comparison showing transformation',
-            'Screen recording of the platform with exciting music',
-            'Real customer testimonial with text overlay',
+            `Show ${brandName} app/website with exciting transitions`,
+            `Before/after comparison — life without vs with ${brandName}`,
+            `Real user testimonial with ${brandName} branding`,
           ],
           music_mood: 'Upbeat and energetic',
           cta: `Visit ${brandName} now — link in bio!`,
         },
-        linkedin_post: `🚀 The future of ${productType || 'commerce'} is here, and ${brandName} is leading the charge.\n\nI've been studying the ${selectedTrend} trend for weeks, and one thing is clear:\n\n✅ Brands that adapt early will dominate\n✅ ${brandName} is already 3 steps ahead\n✅ The opportunity window is closing fast\n\nHere's what most people don't realize about ${brandName}:\n\n1. It's not just a platform — it's an ecosystem\n2. The data shows 40% better results vs alternatives\n3. Early adopters are seeing massive ROI\n\nAre you still on the sidelines? The time to act is NOW.\n\n#${brandName.replace(/\s/g, '')} #Innovation #FutureOfCommerce #Growth`,
+        linkedin_post: `🚀 ${brandName} is redefining ${productType || 'the industry'} — and the numbers prove it.\n\nI've been studying the "${selectedTrend}" trend, and one brand keeps coming up: ${brandName}.\n\nHere's why smart professionals are choosing ${brandName}:\n\n✅ ${trendAngle}\n✅ Proven results with real users\n✅ The technology that actually works\n\nThe window to get ahead is closing. ${brandName} is not just a product — it's a competitive advantage.\n\nAre you still on the sidelines?\n\n#${brandName.replace(/\s/g, '')} #Innovation #Growth #India`,
         instagram_story: {
-          slide_1: `🔥 Hot take: ${brandName} is about to change EVERYTHING`,
-          slide_2: `Here's why smart people are switching to ${brandName} right now 👇`,
-          slide_3: `Tap the link in bio — you won't regret it! 🚀`,
+          slide_1: `🔥 ${brandName} just dropped something HUGE`,
+          slide_2: `Here's why everyone is switching to ${brandName} right now 👇`,
+          slide_3: `Tap the link in bio — ${brandName} is waiting for you! 🚀`,
           sticker_suggestions: [
-            `Poll: Have you tried ${brandName}? Yes/Not yet`,
-            `Question: What's your biggest challenge with ${productType || 'shopping'}?`,
+            `Poll: Have you tried ${brandName}? Yes / Not yet`,
+            `Question: What do you love most about ${brandName}?`,
           ],
         },
-        instagram_caption: `${brandName} just dropped something HUGE 🔥\n\nWhile everyone is talking about ${selectedTrend}, smart creators are already using ${brandName} to stay ahead.\n\nDon't be the last one to know 👀\n\nSave this post and share with someone who needs to see it! 📌`,
+        instagram_caption: `${brandName} is changing the game 🔥\n\nWhile everyone talks about ${selectedTrend.split(' ').slice(0, 4).join(' ')}, smart people are already using ${brandName} to stay ahead.\n\nDon't be the last one to know 👀\n\nSave this and share with someone who needs ${brandName}! 📌`,
         hashtags: [`#${brandName.replace(/\s/g, '')}`, '#Trending', '#AI', '#Innovation', '#Creator', '#Viral', '#Marketing', '#Growth', '#Business', '#India'],
         best_posting_time: 'Tuesday-Thursday, 6-9 PM IST',
         expected_reach: '50K - 500K impressions',
